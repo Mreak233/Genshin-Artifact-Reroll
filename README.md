@@ -78,9 +78,3 @@ https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e07
 
 https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e076d02c76e9bc/resources/meta-gs/artifact/artis-mark.js
 这是miao-plugin的全角色圣遗物副词条权重, 拉到最下面找到新角色按照相同格式添加即可
-
-### 许可证：建议 MIT 或 Apache-2.0。
-
-### References
-
-代码与实现细节（输入示例、基础数据字典、完整实现与注释）来源于当前工程 paste.
