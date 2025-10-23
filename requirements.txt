@@ -1,0 +1,5 @@
+# 必需（运行 artifact_reroll.py 的最小依赖）
+# 若只运行示例纯 Python 实现，可不安装任何第三方包
+numpy>=1.23
+matplotlib>=3.5
+
