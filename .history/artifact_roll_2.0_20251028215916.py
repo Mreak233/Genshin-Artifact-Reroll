@@ -25,9 +25,6 @@ https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e07
 https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e076d02c76e9bc/resources/meta-gs/artifact/artis-mark.js
 这是miao-plugin的全角色圣遗物副词条权重, 拉到最下面找到新角色按照相同格式添加即可
 
-小程序权重请在 微信小程序/提瓦特小助手/圣遗物评分查询/角色名如胡桃/胡桃有效词条及收益比例 查看
-PS:本计算器实际上算法更接近小程序算法, 即评分只与权重和副词条相关, 与主词条无关, 但小程序的头好像会加20分左右, 本计算器无此机制
-
 我为什么要做这个?
 
 包里一大堆圣遗物, 想知道哪些圣遗物重roll提升概率高,  所以就自己写了, 其实技术含量很低，但是也写了一个晚上吧
@@ -103,7 +100,7 @@ BASE_STATS_RAW = {
     "爱可菲": {"HP": 14297, "ATK": 424.84 + 542, "DEF": 783.67},
     "爱诺": {"HP": 11976, "ATK": 303.91 + 608, "DEF": 649.46},
     "玛拉妮": {"HP": 16264, "ATK": 222.67 + 608, "DEF": 610.8},
-    "玛薇卡": {"HP": 13444, "ATK": 439.49 + 741, "DEF": 847.87},
+    "玛薇卡": {"HP": 13444, "ATK": 439.49 + 608, "DEF": 847.87},
     "珊瑚宫心海": {"HP": 14428, "ATK": 287.13 + 608, "DEF": 703.82},
     "珐露珊": {"HP": 10232, "ATK": 246.59 + 608, "DEF": 671.35},
     "班尼特": {"HP": 13255, "ATK": 239.93 + 674, "DEF": 824.6},
@@ -775,20 +772,16 @@ def conditional_replace_counts(
 # ---------------------------
 
 
-from typing import Dict, Optional, Callable
-import os
-
 def plot_pmf(
     pmf_readable: Dict[float, float],
     threshold: float,
     R: int,
-    initial_score: float,
     *,
     mode: str = "auto",
     backend: Optional[str] = None,
     filename: str = "pmf.png",
     verbose: bool = False
-) -> Optional[Callable]:
+) -> Optional[callable]:
     if mode == "none":
         if verbose:
             print("plot_pmf: mode='none' -> skip")
@@ -803,26 +796,21 @@ def plot_pmf(
                     print(f"plot_pmf: backend set to {backend}")
             except Exception as e:
                 if mode == "gui":
-                    raise RuntimeError(f"plot_pmf: failed to set backend {backend}: {e}")
+                    raise RuntimeError(
+                        f"plot_pmf: failed to set backend {backend}: {e}")
                 if verbose:
-                    print(f"plot_pmf: failed to set backend {backend}, fallback: {e}")
+                    print(
+                        f"plot_pmf: failed to set backend {backend}, fallback: {e}")
         import matplotlib.pyplot as plt
         import numpy as np
-        from matplotlib.ticker import FormatStrFormatter, AutoLocator
     except Exception as e:
         if mode == "gui":
-            raise RuntimeError(f"plot_pmf: unable to init matplotlib for GUI: {e}")
+            raise RuntimeError(
+                f"plot_pmf: unable to init matplotlib for GUI: {e}")
         if verbose:
-            print(f"plot_pmf: matplotlib init failed, switching to save mode: {e}")
+            print(
+                f"plot_pmf: matplotlib init failed, switching to save mode: {e}")
         mode = "save"
-        try:
-            import matplotlib.pyplot as plt
-            import numpy as np
-            from matplotlib.ticker import FormatStrFormatter, AutoLocator
-        except Exception:
-            if verbose:
-                print("plot_pmf: matplotlib still unavailable; aborting")
-            return None
 
     x = list(pmf_readable.keys())
     if not x:
@@ -831,63 +819,25 @@ def plot_pmf(
         return None
     y = [pmf_readable[k] for k in x]
 
-    scale_x = 7.0 / 900.0
-    orig_x_plus_init = np.array(x) + float(initial_score)
-    xs = orig_x_plus_init * scale_x
+    xs = np.array(x)
     ys = np.array(y)
     cumsum = np.cumsum(ys)
 
-    fig = None
     try:
         fig, ax = plt.subplots(figsize=(10, 5))
-
-        # width in scaled units
-        if len(x) > 1:
-            raw_span = float(max(x) - min(x))
-            width = max(0.5 * scale_x, (raw_span / 300.0) * scale_x)
-        else:
-            width = max(0.5 * scale_x, 0.01)
-
-        bars = ax.bar(xs, ys, width=width, color="#4A90E2", edgecolor="black", align="center")
-
-        # threshold (scaled) 加上 initial_score*scale_x
-        thresh_scaled = (float(threshold) + float(initial_score)) * scale_x
-        ax.axvline(thresh_scaled, color="red", linestyle="--", label=f"threshold_scaled={thresh_scaled:.4g}")
-
-        # annotation：显示原始 threshold 与 scaled（含 initial_score）
-        ylim = ax.get_ylim()
-        y_text = ylim[1] * 0.9 if ylim[1] > 0 else 0.0
-        ax.annotate(
-            f"threshold_orig={threshold:.6g}\nthreshold_with_init_scaled={thresh_scaled:.4g}",
-            xy=(thresh_scaled, y_text),
-            xytext=(5, 0),
-            textcoords="offset points",
-            color="red",
-            ha="left",
-            va="bottom"
-        )
-
+        width = (max(x) - min(x)) / 300.0 if len(x) > 1 else 1.0
+        width = max(0.5, width)
+        bars = ax.bar(xs, ys, width=width, color="#4A90E2", edgecolor="black")
+        ax.axvline(threshold, color="red", linestyle="--",
+                   label=f"threshold={threshold:.2f}")
         ax.set_title(f"R={R} roll added-score PMF")
-        ax.set_xlabel(f"added score (scaled by {scale_x:g})")
+        ax.set_xlabel("added score")
         ax.set_ylabel("probability")
         ax.legend()
         ax.grid(alpha=0.25)
-
-        # x axis: enforce two decimal places
-        ax.xaxis.set_major_locator(AutoLocator())
-        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-
-        # 限制 x 轴范围到只包含有图像（bars）的区域，并居中显示
-        min_xs = float(np.min(xs))
-        max_xs = float(np.max(xs))
-        pad = width / 2.0
-        left = min_xs - pad
-        right = max_xs + pad
-        ax.set_xlim(left, right)
-
         plt.tight_layout()
 
-        # interactive annotation
+        # Annotation for click
         annot = ax.annotate("", xy=(0, 0), xytext=(15, 15), textcoords="offset points",
                             bbox=dict(boxstyle="round", fc="w"),
                             arrowprops=dict(arrowstyle="->"))
@@ -898,14 +848,12 @@ def plot_pmf(
             return idx
 
         def update_annot(idx: int):
-            score_scaled = float(xs[idx])
-            prob = float(ys[idx])
+            score = xs[idx]
+            prob = ys[idx]
             cum = float(cumsum[idx])
-            score_orig = float(orig_x_plus_init[idx])
-            annot.xy = (score_scaled, prob)
+            annot.xy = (score, prob)
             annot.set_text(
-                f"score_scaled={score_scaled:.6g}\nscore_orig={score_orig:.6g}\nprob={prob:.8f}\ncum={cum:.6f}"
-            )
+                f"score={score:.2f}\nprob={prob:.8f}\ncum={cum:.6f}")
             annot.get_bbox_patch().set_alpha(0.95)
             annot.set_visible(True)
             fig.canvas.draw_idle()
@@ -916,21 +864,14 @@ def plot_pmf(
             xq = event.xdata
             if xq is None:
                 return
-            # 如果点击位置在可见范围之外，不响应
-            if xq < left or xq > right:
-                return
             idx = nearest_index(xq)
             update_annot(idx)
 
         fig.canvas.mpl_connect("button_press_event", on_click)
 
     except Exception as e:
-        if fig is not None:
-            try:
-                plt.close(fig)
-            except Exception:
-                pass
         if mode == "gui":
+            plt.close('all')
             raise
         if verbose:
             print(f"plot_pmf: plotting failed; will try save fallback: {e}")
@@ -938,18 +879,13 @@ def plot_pmf(
     if mode in ("save", "auto"):
         try:
             abs_path = os.path.abspath(filename)
-            if fig is None:
-                fig, ax = plt.subplots(figsize=(10, 5))
             plt.savefig(filename, bbox_inches="tight")
             if verbose:
                 print(f"PMF plot saved to {abs_path}")
         except Exception as e_save:
             if mode == "save":
                 print(f"plot_pmf: failed to save PMF plot: {e_save}")
-                try:
-                    plt.close('all')
-                except Exception:
-                    pass
+                plt.close()
                 return None
             if verbose:
                 print(f"plot_pmf: save failed, attempt GUI: {e_save}")
@@ -970,22 +906,22 @@ def plot_pmf(
         except Exception:
             pass
 
+
 def print_summary(res: Dict[str, Any]) -> None:
-    scale_x = 7.0 / 900.0
     prob_frac = f"{res['numerator']}/{res['denominator']}"
     prob_pct = f"{res['probability_float']:.6%}"
-    mean = f"{(res['mean_added_score'] + res['initial_score']) * scale_x:.6f}"
-    std = f"{res['std_added_score'] * scale_x:.6f}"
-    init = f"{res['initial_score'] * scale_x:.2f}"
-    cur = f"{res['current_score'] * scale_x:.2f}"
-    thr = f"{res['threshold'] * scale_x:.2f}"
-    rng = f"{(res['min_real'] + res['initial_score'])* scale_x:.2f}..{(res['max_real'] + res['initial_score'])* scale_x:.2f}"
+    mean = f"{res['mean_added_score']:.6f}"
+    std = f"{res['std_added_score']:.6f}"
+    init = f"{res['initial_score']:.2f}"
+    cur = f"{res['current_score']:.2f}"
+    thr = f"{res['threshold']:.2f}"
+    rng = f"{res['min_real']:.2f}..{res['max_real']:.2f}"
     print("=== Analysis summary ===")
     print(f"Used stats: {res['used']}")
     print(f"Initial score: {init}    Current score: {cur}    Threshold: {thr}")
     print(f"Support range (min..max): {rng}    R: {res['R']}")
     print(f"Probability (exact): {prob_frac}  (≈ {prob_pct})")
-    print(f"Mean reroll score: {mean}    Std: {std}")
+    print(f"Mean added score: {mean}    Std: {std}")
     print("========================")
 
 
@@ -1201,8 +1137,21 @@ def run_analysis(
         verbose=verbose
     )
 
+    print("Used:", res["used"])
+    print("scale:", res["scale"], "gcd_factor:", res["gcd_factor"],
+          "fractional_path:", res["used_fractional_path"])
+    print("Initial score:", res["initial_score"])
+    print("Current score:", res["current_score"])
+    print("Threshold:", res["threshold"])
+    print("R:", res["R"])
+    print("Probability (exact): {}/{} ≈ {:.6%}".format(
+        res["numerator"], res["denominator"], res["probability_float"]))
+    print("Mean added score ≈ {:.6f}, std ≈ {:.6f}".format(
+        res["mean_added_score"], res["std_added_score"]))
+    print("min_real:", res["min_real"], "max_real:", res["max_real"])
+
     if plot_mode != "none":
-        plot_pmf(res["pmf_readable"], res["threshold"], res["R"], res['initial_score'], mode=plot_mode,
+        plot_pmf(res["pmf_readable"], res["threshold"], res["R"], mode=plot_mode,
                  backend=plot_backend, filename=plot_filename, verbose=verbose)
 
     return res
@@ -1214,9 +1163,9 @@ def run_analysis(
 if __name__ == "__main__":
 
     # 这里是输入数据, 填入评分规则和初始词条数值、当前词条数值
-    role = "胡桃"
-    init_four = {"精":16, "暴":3.5, "攻":5.8,"爆":7.8}
-    current = {"小生":299, "暴":12.4, "攻":11.1,"生":4.7}
+    role = "罗莎莉亚-融化"
+    init_four = {"攻":5.8, "小生":299, "暴":2.7,"爆":6.2}
+    current = {"攻":10.5, "小生":508, "暴":2.7,"爆":25.7}
 
 
     # 默认 candidate_pool = init_four keys（可在这里扩展以包含零权重其他候选）
@@ -1234,7 +1183,7 @@ if __name__ == "__main__":
     # initial_substat_count 4表示初始四词条，3表示初始三词条
     out = run_analysis(role, init_four, current, initial_substat_count=4, delta=0.0,
                        plot_mode="gui",
-                       forced_pair=("暴击", "暴伤"), min_hits=4,
+                       forced_pair=("暴击", "暴伤"), min_hits=3,
                        candidate_pool=candidate_pool,
                        verbose=False)
     print_summary(out)

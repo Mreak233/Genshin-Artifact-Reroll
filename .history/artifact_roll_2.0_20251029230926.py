@@ -25,9 +25,6 @@ https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e07
 https://github.com/yoimiya-kokomi/miao-plugin/blob/c174945eeccba9ffa98ba9cf35e076d02c76e9bc/resources/meta-gs/artifact/artis-mark.js
 这是miao-plugin的全角色圣遗物副词条权重, 拉到最下面找到新角色按照相同格式添加即可
 
-小程序权重请在 微信小程序/提瓦特小助手/圣遗物评分查询/角色名如胡桃/胡桃有效词条及收益比例 查看
-PS:本计算器实际上算法更接近小程序算法, 即评分只与权重和副词条相关, 与主词条无关, 但小程序的头好像会加20分左右, 本计算器无此机制
-
 我为什么要做这个?
 
 包里一大堆圣遗物, 想知道哪些圣遗物重roll提升概率高,  所以就自己写了, 其实技术含量很低，但是也写了一个晚上吧
@@ -980,12 +977,13 @@ def print_summary(res: Dict[str, Any]) -> None:
     cur = f"{res['current_score'] * scale_x:.2f}"
     thr = f"{res['threshold'] * scale_x:.2f}"
     rng = f"{(res['min_real'] + res['initial_score'])* scale_x:.2f}..{(res['max_real'] + res['initial_score'])* scale_x:.2f}"
+    print("\n")
     print("=== Analysis summary ===")
     print(f"Used stats: {res['used']}")
     print(f"Initial score: {init}    Current score: {cur}    Threshold: {thr}")
     print(f"Support range (min..max): {rng}    R: {res['R']}")
     print(f"Probability (exact): {prob_frac}  (≈ {prob_pct})")
-    print(f"Mean reroll score: {mean}    Std: {std}")
+    print(f"Mean rolled score: {mean}    Std: {std}")
     print("========================")
 
 
@@ -1214,9 +1212,9 @@ def run_analysis(
 if __name__ == "__main__":
 
     # 这里是输入数据, 填入评分规则和初始词条数值、当前词条数值
-    role = "胡桃"
+    role = "玛薇卡"
     init_four = {"精":16, "暴":3.5, "攻":5.8,"爆":7.8}
-    current = {"小生":299, "暴":12.4, "攻":11.1,"生":4.7}
+    current = {"精":16, "暴":7, "攻":15.7,"爆":20.2}
 
 
     # 默认 candidate_pool = init_four keys（可在这里扩展以包含零权重其他候选）
