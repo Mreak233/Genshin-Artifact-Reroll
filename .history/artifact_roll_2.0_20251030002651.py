@@ -1234,7 +1234,7 @@ if __name__ == "__main__":
     # delta 可调节阈值，例如调整delta=100*8.5,即为当前圣遗物多一条6.6%爆伤, 7/8/9/10分别对应四个档位, 100是词条权重
     # initial_substat_count 4表示初始四词条，3表示初始三词条
     out = run_analysis(role, init, current, initial_substat_count=4, delta=0.0,
-                       plot_mode="gui",
+                       plot_mode="save",
                        forced_pair=("暴击", "暴伤"), min_hits=2,
                        candidate_pool=candidate_pool,
                        verbose=False)
